@@ -1,0 +1,1964 @@
+# WalletSOP GitHub Bundle
+
+> Single-file source bundle. Copy each section into its corresponding file path in a new repo.
+
+**Rubric v1.0 — 2026-08-05**
+
+---
+
+## index.html
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WalletSOP</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+```
+
+---
+
+## package.json
+
+```json
+{
+  "name": "walletsop",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.26.0",
+    "lucide-react": "^0.475.0",
+    "tailwindcss": "^3.4.17",
+    "tailwindcss-animate": "^1.0.7",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.3",
+    "vite": "^6.1.0",
+    "@vitejs/plugin-react": "^4.3.4"
+  }
+}
+```
+
+---
+
+## vite.config.js
+
+```js
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
+
+export default defineConfig({
+  plugins: [react()],
+})
+```
+
+---
+
+## tailwind.config.js
+
+```js
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  darkMode: ["class"],
+  content: ["./index.html", "./src/**/*.{js,jsx}"],
+  theme: {
+    extend: {},
+  },
+  plugins: [require("tailwindcss-animate")],
+}
+```
+
+---
+
+## public/favicon.svg
+
+```svg
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+</svg>
+```
+
+---
+
+## .github/workflows/release-checksum.yml
+
+```yaml
+name: Release Checksum
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  compute-checksums:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Compute SHA-256 checksums
+        working-directory: dist
+        run: |
+          sha256sum index.html assets/*.js assets/*.css > CHECKSUMS.txt
+          echo "---" >> CHECKSUMS.txt
+          echo "Release: ${{ github.ref_name }}" >> CHECKSUMS.txt
+          echo "Commit: ${{ github.sha }}" >> CHECKSUMS.txt
+          echo "Rubric: v1.0" >> CHECKSUMS.txt
+          echo "Date: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> CHECKSUMS.txt
+          cat CHECKSUMS.txt
+
+      - name: Upload CHECKSUMS.txt to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/CHECKSUMS.txt
+```
+
+---
+
+## postcss.config.js
+
+```js
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+```
+
+---
+
+## src/main.jsx
+
+```jsx
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from '@/App.jsx'
+import '@/index.css'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <App />
+)
+```
+
+---
+
+## src/App.jsx
+
+```jsx
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import PageNotFound from './lib/PageNotFound';
+import Home from './pages/Home';
+import EntropyCalculator from './pages/EntropyCalculator';
+import BestPractices from './pages/BestPractices';
+import Layout from './components/walletsop/Layout';
+
+export default function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/entropy-calculator" element={<EntropyCalculator />} />
+          <Route path="/best-practices" element={<BestPractices />} />
+          <Route path="*" element={<PageNotFound />} />
+        </Route>
+      </Routes>
+    </Router>
+  )
+}
+```
+
+---
+
+## src/index.css
+
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+---
+
+## src/lib/diagnostics.js
+
+```js
+// Pure client-side scoring logic. No storage, no network.
+
+export const RUBRIC_VERSION = "v1.0";
+export const RUBRIC_DATE = "2026-08-05";
+
+export const DEVICES = [
+  "Coldcard Mk3",
+  "Coldcard Mk4",
+  "Trezor Model T2",
+  "Ledger Stax",
+  "BitBox02",
+  "Foundation Passport",
+  "Other / Software Wallet",
+];
+
+export const SEED_AGES = ["Pre-2022", "2023", "2024+", "Don't know"];
+
+export const ENTROPY_OPTIONS = [
+  { value: "device_only", label: "Device TRNG only, no manual entropy" },
+  { value: "mixed", label: "Mixed: some manual dice rolls plus device randomness" },
+  { value: "dice", label: "Fully manual: dice rolls entered directly on device" },
+];
+
+export const BACKUP_MEDIUMS = [
+  "Metal plate (stamped/engraved)",
+  "Paper (handwritten)",
+  "No physical backup",
+  "Other",
+];
+
+export const RUBRIC_TEXT = `Rubric ${RUBRIC_VERSION} — ${RUBRIC_DATE}
+
+Each sub-score starts at 100 and is calculated independently. Clamp 0-100.
+
+A. Entropy
+  +60 dice-based, 50+ rolls | +30 dice-based, 20-49 rolls | +10 dice-based, <20 rolls | -15 mixed | -40 device TRNG only
+  [severity tag: Medium — Single Point of Failure]
+
+B. Backup & Storage
+  Base 100. -100 if seed phrase has ever existed as a digital file, cloud backup, password manager entry, photo, or been typed on any internet-connected device.
+  [severity tag: Critical — Fatal Failure]
+
+C. Access Control
+  +30 BIP-39 passphrase in use | +20 multisig quorum in use | (no penalty for absence, only foregone points)
+
+D. Operational Hygiene
+  +10 firmware current / -10 firmware not current`;
+
+export function getCategory(score) {
+  if (score >= 80) return { label: "Strong", tone: "secure" };
+  if (score >= 60) return { label: "Developing", tone: "warning" };
+  if (score >= 40) return { label: "Needs Attention", tone: "warning" };
+  return { label: "Critical", tone: "critical" };
+}
+
+export function diagnose(state) {
+  const { entropySource, diceRolls, firmwareCurrent, passphrase, multisig, exposure, fingerprint } = state;
+
+  // A. Entropy
+  let entropyScore = 100;
+  const entropyBadges = [];
+  const entropyBreakdown = [];
+  const rolls = parseInt(diceRolls) || 0;
+
+  if (entropySource === "device_only") {
+    entropyScore -= 40;
+    entropyBadges.push({ tone: "warning", label: "Device-Only TRNG", tag: "Medium — Single Point of Failure" });
+    entropyBreakdown.push("-40 Device TRNG only");
+  } else if (entropySource === "mixed") {
+    entropyScore -= 15;
+    entropyBadges.push({ tone: "warning", label: "Mixed Entropy", tag: "Medium — Single Point of Failure" });
+    entropyBreakdown.push("-15 Mixed entropy source");
+  } else if (entropySource === "dice") {
+    if (rolls < 20) {
+      entropyScore += 10;
+      entropyBadges.push({ tone: "secure", label: "Dice Entropy (<20 rolls)" });
+      entropyBreakdown.push("+10 Dice-based, <20 rolls");
+    } else if (rolls < 50) {
+      entropyScore += 30;
+      entropyBadges.push({ tone: "secure", label: "Dice Entropy (20–49 rolls)" });
+      entropyBreakdown.push("+30 Dice-based, 20-49 rolls");
+    } else {
+      entropyScore += 60;
+      entropyBadges.push({ tone: "secure", label: "Dice Entropy (50+ rolls)" });
+      entropyBreakdown.push("+60 Dice-based, 50+ rolls");
+    }
+  }
+
+  // B. Backup & Storage
+  let backupScore = 100;
+  const backupBadges = [];
+  const backupBreakdown = [];
+
+  if (exposure === "yes") {
+    backupScore -= 100;
+    backupBadges.push({ tone: "critical", label: "Digital Exposure Detected", tag: "Critical — Fatal Failure" });
+    backupBreakdown.push("-100 Seed phrase exposed to internet-connected device");
+  } else if (exposure === "no") {
+    backupBadges.push({ tone: "secure", label: "No Digital Exposure" });
+    backupBreakdown.push("No digital exposure reported");
+  }
+
+  // C. Access Control
+  let accessScore = 100;
+  const accessBadges = [];
+  const accessBreakdown = [];
+
+  if (passphrase) {
+    accessScore += 30;
+    accessBadges.push({ tone: "secure", label: "BIP-39 Passphrase Active" });
+    accessBreakdown.push("+30 BIP-39 passphrase in use");
+  } else {
+    accessBadges.push({ tone: "warning", label: "Not Yet Hardened — No Passphrase" });
+    accessBreakdown.push("Passphrase not in use — 30 points foregone (not a penalty)");
+  }
+  if (multisig) {
+    accessScore += 20;
+    accessBadges.push({ tone: "secure", label: "Multi-Signature Quorum" });
+    accessBreakdown.push("+20 multisig quorum in use");
+  } else {
+    accessBadges.push({ tone: "warning", label: "Not Yet Hardened — No Multisig" });
+    accessBreakdown.push("Multisig not in use — 20 points foregone (not a penalty)");
+  }
+
+  // D. Operational Hygiene
+  let hygieneScore = 100;
+  const hygieneBadges = [];
+  const hygieneBreakdown = [];
+
+  if (firmwareCurrent) {
+    hygieneScore += 10;
+    hygieneBadges.push({ tone: "secure", label: "Patched Firmware" });
+    hygieneBreakdown.push("+10 firmware current");
+  } else {
+    hygieneScore -= 10;
+    hygieneBadges.push({ tone: "warning", label: "Unpatched Firmware" });
+    hygieneBreakdown.push("-10 firmware not current");
+  }
+
+  // Fingerprint (not scored, local validation only)
+  const fpValid = /^[0-9a-fA-F]{8}$/.test((fingerprint || "").trim());
+  if (fingerprint && !fpValid) {
+    hygieneBadges.push({ tone: "warning", label: "Fingerprint Format Invalid" });
+  } else if (fpValid) {
+    hygieneBadges.push({ tone: "secure", label: "Fingerprint Validated" });
+  }
+
+  // Clamp all
+  entropyScore = Math.max(0, Math.min(100, entropyScore));
+  backupScore = Math.max(0, Math.min(100, backupScore));
+  accessScore = Math.max(0, Math.min(100, accessScore));
+  hygieneScore = Math.max(0, Math.min(100, hygieneScore));
+
+  const fatal = backupScore === 0;
+
+  const subScores = {
+    entropy: { score: entropyScore, badges: entropyBadges, breakdown: entropyBreakdown, label: "Entropy" },
+    backup: { score: backupScore, badges: backupBadges, breakdown: backupBreakdown, label: "Backup & Storage" },
+    access: { score: accessScore, badges: accessBadges, breakdown: accessBreakdown, label: "Access Control" },
+    hygiene: { score: hygieneScore, badges: hygieneBadges, breakdown: hygieneBreakdown, label: "Operational Hygiene" },
+  };
+
+  return { subScores, fatal };
+}
+
+export function buildRecommendations(result, state) {
+  const { fatal, subScores } = result;
+
+  if (fatal) {
+    return {
+      type: "migration",
+      title: "Urgent Migration SOP",
+      steps: [
+        {
+          text: "Generate a new seed using dice-based entropy (50+ rolls) entered directly on the device.",
+          why: "The exposed seed must be treated as already compromised. Dice-based entropy removes the device manufacturer's RNG from your trust model, so the replacement seed's security depends only on fair dice and your rolling technique — not on any hardware you can't audit.",
+        },
+        {
+          text: "Stamp the new seed onto a fireproof metal backup plate. Never photograph or type it.",
+          why: "Metal survives house fires and water damage that would destroy paper. Any digital representation — photo, cloud sync, typed note — reintroduces the exact exposure that forced this migration, undoing the regeneration before it's even complete.",
+        },
+        {
+          text: "Migrate your funds from the exposed wallet to the newly generated wallet.",
+          why: "Funds left on the exposed seed remain at risk indefinitely — anyone who captured the digital copy can move them at any time. Migration transfers custody to a seed whose private material has never touched an internet-connected device.",
+        },
+        {
+          text: "Retire and securely destroy the exposed seed material.",
+          why: "An intact physical copy of the old seed is still usable by anyone who finds it. Physical destruction — not merely discarding — is the only way to guarantee the exposed material can't be recovered and used after migration.",
+        },
+      ],
+      needsSeedRegeneration: true,
+    };
+  }
+
+  const steps = [];
+
+  if (state.entropySource === "device_only" || state.entropySource === "mixed") {
+    steps.push({
+      text: "For future seeds, consider dice-based entropy generation (50+ rolls) to remove single-point-of-trust dependency on device RNG.",
+      why: "Device TRNG output can't be independently audited — you're trusting the manufacturer's implementation is sound and unbackdoored. Manual dice rolls let you verify the entropy source with your own eyes, collapsing a hidden trust assumption into a physical process you control.",
+    });
+  } else if (state.entropySource === "dice") {
+    const rolls = parseInt(state.diceRolls) || 0;
+    if (rolls < 50) {
+      steps.push({
+        text: `You used ${rolls} dice rolls. Consider 50+ rolls for future seeds to maximize entropy.`,
+        why: "BIP-39 seeds target 128 bits of entropy as a minimum security threshold. Below ~50 fair six-sided rolls, the total combination space may fall short of that threshold — more rolls push you comfortably past it rather than leaving you near the edge.",
+      });
+    }
+  }
+
+  if (!state.passphrase) {
+    steps.push({
+      text: "Add a BIP-39 passphrase, stored separately from the seed backup.",
+      why: "A passphrase acts as a 25th word — even if your seed phrase is ever found, photographed, or copied, funds can't be accessed without it. It's the single highest-leverage addition for a low ongoing burden, and it decouples 'finding the backup' from 'stealing the funds.'",
+    });
+  }
+  if (!state.multisig) {
+    steps.push({
+      text: "Consider a multi-signature setup for additional key redundancy.",
+      why: "Multisig requires multiple independent devices to authorize a transaction, so no single compromised key can move funds. It also tolerates the loss of one key without losing access to the wallet — turning a single point of failure into a quorum.",
+    });
+  }
+  if (!state.firmwareCurrent) {
+    steps.push({
+      text: "Update device firmware to the latest patched build.",
+      why: "Manufacturers publish firmware updates to close specific, identified vulnerabilities. Running an unpatched build means any publicly disclosed flaw in your firmware version is exploitable against your device as-is — updates close those gaps rather than leaving them open.",
+    });
+  }
+
+  const needsSeedRegeneration =
+    state.entropySource === "device_only" ||
+    state.entropySource === "mixed" ||
+    (state.entropySource === "dice" && (parseInt(state.diceRolls) || 0) < 50);
+
+  return {
+    type: "hardening",
+    title: "Hardening SOP",
+    steps,
+    needsSeedRegeneration,
+  };
+}
+```
+
+---
+
+## src/components/walletsop/Layout.jsx
+
+```jsx
+import { Outlet } from "react-router-dom";
+import Header from "./Header";
+import Nav from "./Nav";
+import Footer from "./Footer";
+
+export default function Layout() {
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-200">
+      <Header />
+      <Nav />
+      <main className="mx-auto max-w-5xl px-6 py-10">
+        <Outlet />
+      </main>
+      <Footer />
+    </div>
+  );
+}
+```
+
+---
+
+## src/components/walletsop/Nav.jsx
+
+```jsx
+import { NavLink } from "react-router-dom";
+import { Activity, Calculator, BookOpen } from "lucide-react";
+
+const TABS = [
+  { to: "/", label: "Audit", icon: Activity, end: true },
+  { to: "/entropy-calculator", label: "Entropy Calculator", icon: Calculator, end: false },
+  { to: "/best-practices", label: "Best Practices", icon: BookOpen, end: false },
+];
+
+export default function Nav() {
+  return (
+    <nav className="border-b border-slate-800/80 bg-slate-950 print:hidden">
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="flex gap-1 overflow-x-auto">
+          {TABS.map((tab) => (
+            <NavLink
+              key={tab.to}
+              to={tab.to}
+              end={tab.end}
+              className={({ isActive }) =>
+                `flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                  isActive
+                    ? "border-emerald-500 text-emerald-400"
+                    : "border-transparent text-slate-400 hover:text-slate-200"
+                }`
+              }
+            >
+              <tab.icon className="h-4 w-4" />
+              {tab.label}
+            </NavLink>
+          ))}
+        </div>
+      </div>
+    </nav>
+  );
+}
+```
+
+---
+
+## src/components/walletsop/Header.jsx
+
+```jsx
+import React from "react";
+import { ShieldCheck, Github, Activity } from "lucide-react";
+
+const REPO_URL = "https://github.com/walletsop/walletsop";
+
+export default function Header() {
+  return (
+    <header className="border-b border-slate-800/80 bg-slate-950/95 backdrop-blur sticky top-0 z-30 print:hidden">
+      <div className="max-w-5xl mx-auto px-6 py-5">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
+              <Activity className="h-5 w-5 text-emerald-400" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold tracking-tight text-white">WalletSOP</h1>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                Self-Custody Procedural Audit
+              </p>
+            </div>
+          </div>
+          <a
+            href={REPO_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-200 transition-colors hover:border-emerald-500/60 hover:text-emerald-300 print:hidden"
+          >
+            <Github className="h-4 w-4" />
+            Audit Source Code
+          </a>
+        </div>
+
+        <div className="mt-4 flex items-start gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5">
+          <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-400 mt-0.5" />
+          <p className="text-sm font-medium text-emerald-400">
+            100% Stateless. No data ever leaves your browser. No seed phrase requested. Never
+            connects to your hardware wallet.
+          </p>
+        </div>
+      </div>
+    </header>
+  );
+}
+```
+
+---
+
+## src/lib/release-info.js
+
+```js
+// Build-time release constants. These are populated by CI at release time.
+// Until then, they remain "PENDING" — the footer shows an amber warning state.
+export const RELEASE_HASH = "PENDING_RELEASE_BUILD";
+export const RELEASE_COMMIT = "PENDING";
+
+// RUBRIC_VERSION is canonically declared in diagnostics.js (alongside RUBRIC_DATE
+// and RUBRIC_TEXT). Re-export it here so consumers importing from release-info.js
+// stay in sync with a single source of truth.
+import { RUBRIC_VERSION } from "@/lib/diagnostics";
+export { RUBRIC_VERSION };
+```
+
+---
+
+## src/components/walletsop/Footer.jsx
+
+```jsx
+import React from "react";
+import { Github } from "lucide-react";
+import { RELEASE_HASH, RELEASE_COMMIT, RUBRIC_VERSION } from "@/lib/release-info";
+
+const REPO_URL = "https://github.com/walletsop/walletsop";
+
+export default function Footer() {
+  const isPending = RELEASE_HASH === "PENDING_RELEASE_BUILD";
+
+  return (
+    <footer className="mt-16 border-t border-slate-800/80 py-8 print:hidden">
+      <div className="mx-auto flex max-w-5xl flex-col items-center gap-4 px-6 sm:flex-row sm:justify-between">
+        <div className="text-center sm:text-left">
+          <p className="text-xs text-slate-500">
+            WalletSOP — open-source, stateless. All computation happens in your browser.
+          </p>
+          <div className={`mt-1 rounded-md border px-3 py-2 ${isPending ? "border-amber-500/30 bg-amber-500/5" : "border-emerald-500/30 bg-emerald-500/5"}`}>
+            <p className={`text-xs font-medium ${isPending ? "text-amber-400" : "text-emerald-400"}`}>
+              Rubric {RUBRIC_VERSION} — build checksum: {RELEASE_HASH}
+            </p>
+            <p className="mt-1 text-xs text-slate-600">
+              Verify: <code className="font-mono text-slate-500">sha256sum</code> against dist/ output for commit{" "}
+              <code className="font-mono text-slate-500">{RELEASE_COMMIT}</code>
+            </p>
+            {isPending && (
+              <p className="mt-1 text-xs text-amber-500/70">
+                No release build has been published yet. Checksum will appear here after the first tagged release.
+              </p>
+            )}
+          </div>
+        </div>
+        <a
+          href={REPO_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-2 text-sm text-slate-300 transition-colors hover:text-emerald-400"
+        >
+          <Github className="h-4 w-4" />
+          Audit Source Code
+        </a>
+      </div>
+    </footer>
+  );
+}
+```
+
+---
+
+## src/components/walletsop/Panel.jsx
+
+```jsx
+import React from "react";
+
+export default function Panel({ index, title, subtitle, children, highlight }) {
+  return (
+    <section
+      className={`rounded-xl border p-6 ${
+        highlight ? "border-amber-500/20 bg-amber-500/[0.02]" : "border-slate-800 bg-slate-900/40"
+      }`}
+    >
+      <div className="mb-5 flex items-baseline gap-3">
+        <span className="text-xs font-mono text-emerald-400">{String(index).padStart(2, "0")}</span>
+        <div>
+          <h3 className="text-base font-semibold text-white">{title}</h3>
+          {subtitle && <p className="mt-0.5 text-sm text-slate-400">{subtitle}</p>}
+        </div>
+      </div>
+      <div className="space-y-5">{children}</div>
+    </section>
+  );
+}
+```
+
+---
+
+## src/components/walletsop/Checkup.jsx
+
+```jsx
+import React from "react";
+import { Link } from "react-router-dom";
+import Panel from "./Panel";
+import Toggle from "./Toggle";
+import { DEVICES, SEED_AGES, ENTROPY_OPTIONS, BACKUP_MEDIUMS } from "@/lib/diagnostics";
+import { HelpCircle } from "lucide-react";
+
+const selectCls =
+  "w-full rounded-lg border border-slate-800 bg-slate-900/70 px-4 py-3 text-sm text-slate-100 outline-none transition-colors focus:border-emerald-500/60";
+
+const ENTROPY_RATIONALE = {
+  device_only:
+    "Single-source entropy relies entirely on the device manufacturer's RNG implementation being sound and unbackdoored. Manual entropy removes that single point of trust.",
+  mixed:
+    "Mixing manual dice rolls with device randomness reduces dependence on a single entropy source, though the device RNG still contributes to the final seed.",
+  dice:
+    "Fully manual dice-based entropy removes the device manufacturer's RNG from your trust model entirely. Security depends on fair dice and unbiased rolling technique.",
+  "": "",
+};
+
+const EXPOSURE_RATIONALE = {
+  yes: "If your seed has been exposed to any internet-connected device, it should be treated as compromised. This is the only condition that triggers a critical result.",
+  no: "Keeping your seed entirely offline is the foundation of cold-storage security.",
+  "": "",
+};
+
+export default function Checkup({ state, set }) {
+  const showDiceInput = state.entropySource === "mixed" || state.entropySource === "dice";
+  const rollsNum = parseInt(state.diceRolls) || 0;
+  const rollsInvalid = state.diceRolls !== "" && (isNaN(parseInt(state.diceRolls)) || rollsNum > 500);
+
+  return (
+    <div className="space-y-5">
+      {/* Panel 1 — Device & Timeline (informational, not scored) */}
+      <Panel
+        index={1}
+        title="Device & Timeline"
+        subtitle="For your reference in the exported SOP — does not affect any score."
+      >
+        <div>
+          <label className="mb-2 block text-sm text-slate-300">Hardware Wallet Model</label>
+          <select className={selectCls} value={state.device} onChange={(e) => set("device", e.target.value)}>
+            <option value="">Select a device…</option>
+            {DEVICES.map((d) => (
+              <option key={d} value={d}>{d}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-2 block text-sm text-slate-300">When was your seed generated?</label>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {SEED_AGES.map((a) => (
+              <button
+                key={a}
+                type="button"
+                onClick={() => set("seedAge", a)}
+                className={`rounded-lg border px-3 py-2.5 text-sm transition-all ${
+                  state.seedAge === a
+                    ? "border-emerald-500/60 bg-emerald-500/10 text-emerald-400"
+                    : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700"
+                }`}
+              >
+                {a}
+              </button>
+            ))}
+          </div>
+        </div>
+      </Panel>
+
+      {/* Panel 2 — Entropy Source (scored) */}
+      <Panel index={2} title="Entropy Source" subtitle="How was the randomness for your seed generated?">
+        <div>
+          <label className="mb-2 block text-sm text-slate-300">Randomness Method</label>
+          <select
+            className={selectCls}
+            value={state.entropySource}
+            onChange={(e) => set("entropySource", e.target.value)}
+          >
+            <option value="">Select a method…</option>
+            {ENTROPY_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        </div>
+        {state.entropySource && (
+          <p className="rounded-md border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm leading-relaxed text-slate-400">
+            {ENTROPY_RATIONALE[state.entropySource]}{" "}
+            <Link to="/best-practices#manual-entropy" className="text-emerald-400 hover:underline">
+              Learn more
+            </Link>
+          </p>
+        )}
+        {showDiceInput && (
+          <div>
+            <label className="mb-2 block text-sm text-slate-300">How many dice rolls?</label>
+            <input
+              type="number"
+              min="0"
+              value={state.diceRolls}
+              onChange={(e) => set("diceRolls", e.target.value)}
+              placeholder="e.g. 50"
+              className={`${selectCls} font-mono ${rollsInvalid ? "border-amber-500/60" : ""}`}
+            />
+            {rollsInvalid && (
+              <p className="mt-1 text-xs text-amber-400">
+                That value seems unusual. Double-check your roll count — values above 500 are rare.
+              </p>
+            )}
+            <p className="mt-2 text-xs text-slate-500">
+              Not sure how many rolls you need?{" "}
+              <Link to="/entropy-calculator" className="text-emerald-400 hover:underline">
+                Try the Entropy Calculator
+              </Link>
+            </p>
+          </div>
+        )}
+      </Panel>
+
+      {/* Panel 3 — Backup & Storage (contains fatal-weight question) */}
+      <Panel
+        index={3}
+        title="Backup & Storage"
+        subtitle="Contains the one question that can trigger a critical result."
+        highlight
+      >
+        <div>
+          <label className="mb-2 block text-sm text-slate-300">Physical Backup Medium</label>
+          <select
+            className={selectCls}
+            value={state.backupMedium}
+            onChange={(e) => set("backupMedium", e.target.value)}
+          >
+            <option value="">Select a medium…</option>
+            {BACKUP_MEDIUMS.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <p className="mb-3 text-sm leading-relaxed text-slate-300">
+            Has this seed phrase — in whole or in part — ever existed as a digital file, cloud backup,
+            password manager entry, photo, or been typed on any internet-connected device?
+          </p>
+          <div className="flex gap-2">
+            {["no", "yes"].map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => set("exposure", opt)}
+                className={`flex-1 rounded-lg border px-4 py-3 text-sm font-medium capitalize transition-all ${
+                  state.exposure === opt
+                    ? opt === "yes"
+                      ? "border-red-500/60 bg-red-500/10 text-red-400"
+                      : "border-emerald-500/60 bg-emerald-500/10 text-emerald-400"
+                    : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700"
+                }`}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+          {state.exposure && (
+            <p className="mt-3 rounded-md border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm leading-relaxed text-slate-400">
+              {EXPOSURE_RATIONALE[state.exposure]}
+            </p>
+          )}
+        </div>
+      </Panel>
+
+      {/* Panel 4 — Access Control & Hygiene */}
+      <Panel
+        index={4}
+        title="Access Control & Hygiene"
+        subtitle="Active protections on your wallet setup."
+      >
+        <Toggle
+          label="Firmware is current / patched"
+          hint="Keeping your device firmware current patches known vulnerabilities identified by the manufacturer."
+          checked={state.firmwareCurrent}
+          onChange={(v) => set("firmwareCurrent", v)}
+        />
+        <Toggle
+          label="BIP-39 passphrase in use"
+          hint="A BIP-39 passphrase adds a 25th word that must be stored separately from your seed backup."
+          checked={state.passphrase}
+          onChange={(v) => set("passphrase", v)}
+        />
+        <Toggle
+          label="Multi-signature quorum in use"
+          hint="Multi-signature requires multiple independent devices to authorize transactions, reducing single-point-of-failure risk."
+          checked={state.multisig}
+          onChange={(v) => set("multisig", v)}
+        />
+      </Panel>
+
+      {/* Panel 5 — Optional Public Verification */}
+      <Panel
+        index={5}
+        title="Optional Public Verification"
+        subtitle="Never enter a seed phrase. This field accepts public data only."
+      >
+        <div>
+          <label className="mb-2 flex items-center gap-2 text-sm text-slate-300">
+            Master Key Fingerprint (8-character hex)
+            <span className="group relative inline-flex">
+              <HelpCircle className="h-4 w-4 cursor-help text-slate-500" />
+              <span className="pointer-events-none absolute left-6 top-1/2 z-20 w-64 -translate-y-1/2 rounded-md border border-slate-700 bg-slate-900 p-3 text-xs leading-relaxed text-slate-300 opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+                Non-secret public data. Used strictly for local format validation in your browser — it
+                is never stored or transmitted.
+              </span>
+            </span>
+          </label>
+          <input
+            value={state.fingerprint}
+            onChange={(e) => set("fingerprint", e.target.value)}
+            placeholder="8f3a1b0c"
+            maxLength={8}
+            className={`${selectCls} font-mono tracking-widest`}
+          />
+        </div>
+      </Panel>
+
+      {/* Panel 6 — What This Tool Is — and Isn't */}
+      <Panel index={6} title="What This Tool Is — and Isn't">
+        <p className="text-sm leading-relaxed text-slate-400">
+          This audit evaluates the procedures you report, not your actual device or wallet. It cannot
+          detect malware, supply-chain tampering, or hardware-specific vulnerabilities — this tool
+          never connects to your device. It is not a substitute for professional review, especially
+          for large holdings. Your answers are self-reported and never verified against reality.
+        </p>
+      </Panel>
+    </div>
+  );
+}
+```
+
+---
+
+## src/components/walletsop/ResultsDashboard.jsx
+
+```jsx
+import React, { useState } from "react";
+import ScoreRing from "./ScoreRing";
+import { ChevronDown } from "lucide-react";
+import { RUBRIC_TEXT, RUBRIC_VERSION, RUBRIC_DATE, getCategory } from "@/lib/diagnostics";
+
+const TONES = {
+  critical: "border-red-500/40 bg-red-500/10 text-red-400",
+  warning: "border-amber-500/40 bg-amber-500/10 text-amber-400",
+  secure: "border-emerald-500/40 bg-emerald-500/10 text-emerald-400",
+};
+
+function SubScoreCard({ sub }) {
+  const cat = getCategory(sub.score);
+  return (
+    <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-slate-300">{sub.label}</h3>
+        <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${TONES[cat.tone]}`}>
+          {cat.label}
+        </span>
+      </div>
+      <div className="flex items-center gap-4">
+        <ScoreRing score={sub.score} label={sub.label.split(" ")[0]} size="sm" />
+        <div className="flex-1 space-y-2">
+          {sub.badges.map((b) => (
+            <div key={b.label}>
+              <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${TONES[b.tone]}`}>
+                {b.label}
+              </span>
+              {b.tag && (
+                <span className="ml-2 text-xs text-slate-600">{b.tag}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+      {sub.breakdown.length > 0 && (
+        <ul className="mt-4 space-y-1 border-t border-slate-800 pt-3">
+          {sub.breakdown.map((line, i) => (
+            <li key={i} className="font-mono text-xs text-slate-500">{line}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+export default function ResultsDashboard({ result }) {
+  const [showRubric, setShowRubric] = useState(false);
+  const { subScores } = result;
+
+  return (
+    <section className="rounded-xl border border-slate-800 bg-slate-900/40 p-6">
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">
+          Audit Results
+        </h2>
+      </div>
+      <p className="mb-6 text-xs text-slate-500">
+        Reflects what you reported, not a verification of your actual setup.
+      </p>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {Object.values(subScores).map((sub) => (
+          <SubScoreCard key={sub.label} sub={sub} />
+        ))}
+      </div>
+
+      {/* Collapsible rubric */}
+      <div className="mt-6 border-t border-slate-800 pt-4">
+        <button
+          onClick={() => setShowRubric((s) => !s)}
+          className="flex w-full items-center justify-between text-sm text-slate-400 hover:text-slate-200"
+        >
+          <span>Full Rubric ({RUBRIC_VERSION} — {RUBRIC_DATE})</span>
+          <ChevronDown className={`h-4 w-4 transition-transform ${showRubric ? "rotate-180" : ""}`} />
+        </button>
+        {showRubric && (
+          <pre className="mt-3 overflow-auto rounded-lg border border-slate-800 bg-[#0a0e14] p-4">
+            <code className="whitespace-pre font-mono text-xs leading-relaxed text-slate-400">
+              {RUBRIC_TEXT}
+            </code>
+          </pre>
+        )}
+      </div>
+    </section>
+  );
+}
+```
+
+---
+
+## src/components/walletsop/Recommendations.jsx
+
+```jsx
+import React, { useState } from "react";
+import { Printer, Check } from "lucide-react";
+import SeedRegenerationGuide from "./SeedRegenerationGuide";
+
+export default function Recommendations({ rec, state }) {
+  const [done, setDone] = useState({});
+  const isFatal = rec.type === "migration";
+
+  return (
+    <section
+      className={`rounded-xl border p-6 ${
+        isFatal ? "border-red-500/30 bg-red-500/[0.04]" : "border-amber-500/30 bg-amber-500/[0.04]"
+      }`}
+    >
+      {/* Print-only header with device/timeline info */}
+      <div className="hidden print:block mb-4">
+        <p className="text-sm text-slate-400">Device: {state.device || "Not specified"}</p>
+        <p className="text-sm text-slate-400">Seed generated: {state.seedAge || "Not specified"}</p>
+        <p className="text-sm text-slate-400">Backup medium: {state.backupMedium || "Not specified"}</p>
+      </div>
+
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-base font-semibold text-white">{rec.title}</h2>
+        <button
+          onClick={() => window.print()}
+          className="inline-flex items-center gap-2 rounded-md bg-emerald-500 px-3.5 py-2 text-sm font-medium text-slate-950 transition-colors hover:bg-emerald-400 print:hidden"
+        >
+          <Printer className="h-4 w-4" />
+          Export Checklist
+        </button>
+      </div>
+
+      <ol className="space-y-3">
+        {rec.steps.map((step, i) => (
+          <li
+            key={i}
+            className="flex flex-wrap items-start gap-3 rounded-lg border border-slate-800 bg-slate-900/60 p-4"
+          >
+            <button
+              onClick={() => setDone((d) => ({ ...d, [i]: !d[i] }))}
+              className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors print:hidden ${
+                done[i] ? "border-emerald-500 bg-emerald-500" : "border-slate-600"
+              }`}
+            >
+              {done[i] && <Check className="h-3.5 w-3.5 text-slate-950" />}
+            </button>
+            <div className="flex-1 min-w-[240px]">
+              <p className={`text-sm ${done[i] ? "text-slate-500 line-through" : "text-slate-200"}`}>
+                <span className="mr-2 font-mono text-xs text-emerald-400">{i + 1}.</span>
+                {step.text}
+              </p>
+              {step.why && (
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
+                  {step.why}
+                </p>
+              )}
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      {rec.needsSeedRegeneration && (
+        <div className="mt-6">
+          <SeedRegenerationGuide />
+        </div>
+      )}
+
+      {!isFatal && (
+        <p className="mt-4 text-xs text-slate-500">
+          These are hardening suggestions for improving your setup. They do not require moving
+          existing funds.
+        </p>
+      )}
+    </section>
+  );
+}
+```
+
+---
+
+## src/components/walletsop/SeedRegenerationGuide.jsx
+
+```jsx
+import React from "react";
+import { Link } from "react-router-dom";
+import { Dices, AlertTriangle, Eye, Ban } from "lucide-react";
+
+export default function SeedRegenerationGuide() {
+  return (
+    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+      <h3 className="mb-4 text-sm font-semibold text-white">Seed Regeneration Guide</h3>
+      <div className="space-y-4">
+        <div className="flex gap-3">
+          <Dices className="h-5 w-5 shrink-0 text-emerald-400 mt-0.5" />
+          <div>
+            <h4 className="text-sm font-medium text-slate-200">Choose a Fair Die</h4>
+            <p className="mt-1 text-xs leading-relaxed text-slate-400">
+              Use a standard, undamaged die with clear, legible faces. Casino-grade dice are ideal due
+              to manufacturing precision, but any fair die without visible chips, warps, or worn edges
+              will work. Avoid dice with biased geometry — if a die consistently lands on the same face,
+              discard it.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <AlertTriangle className="h-5 w-5 shrink-0 text-amber-400 mt-0.5" />
+          <div>
+            <h4 className="text-sm font-medium text-slate-200">Roll Without Bias</h4>
+            <p className="mt-1 text-xs leading-relaxed text-slate-400">
+              Roll in a clean tray or box so the die can tumble freely. Discard any roll where the die
+              lands on an edge, leans against a wall, or is illegible. Record only clean, flat, clearly
+              readable results. There is no "too many rolls" — more rolls means more entropy.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <Dices className="h-5 w-5 shrink-0 text-emerald-400 mt-0.5" />
+          <div>
+            <h4 className="text-sm font-medium text-slate-200">Map Rolls to Entropy</h4>
+            <p className="mt-1 text-xs leading-relaxed text-slate-400">
+              Each roll of a standard 6-sided die contributes approximately 2.58 bits of entropy. 50
+              rolls exceeds the 128-bit BIP-39 minimum (12-word); 100 rolls exceeds the 256-bit
+              recommendation (24-word).{" "}
+              <Link to="/entropy-calculator" className="text-emerald-400 hover:underline">
+                Use the Entropy Calculator
+              </Link>{" "}
+              to compute exact values for your setup.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <Eye className="h-5 w-5 shrink-0 text-emerald-400 mt-0.5" />
+          <div>
+            <h4 className="text-sm font-medium text-slate-200">Verify Each Roll On-Device</h4>
+            <p className="mt-1 text-xs leading-relaxed text-slate-400">
+              Enter each roll directly on your hardware wallet. After each entry, confirm the device
+              displays the correct value before proceeding to the next roll. Do not let any software,
+              spreadsheet, or intermediary process collect or "help" with the values — the dice and the
+              device should be the only two things in the loop.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <Ban className="h-5 w-5 shrink-0 text-red-400 mt-0.5" />
+          <div>
+            <h4 className="text-sm font-medium text-slate-200">Never Let Software Assist</h4>
+            <p className="mt-1 text-xs leading-relaxed text-slate-400">
+              No app, browser extension, script, or "entropy generator" should touch your roll values.
+              If any tool offers to generate, collect, format, or transmit dice results, stop and do not
+              use it. The entire point of manual entropy is removing software from the trust model.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## src/components/walletsop/ScoreRing.jsx
+
+```jsx
+import React from "react";
+
+export default function ScoreRing({ score, label = "Score", size = "md" }) {
+  const color = score < 50 ? "#EF4444" : score < 80 ? "#F59E0B" : "#10B981";
+  const dim = size === "sm" ? 120 : 160;
+  const r = 62;
+  const c = 2 * Math.PI * r;
+  const offset = c - (score / 100) * c;
+
+  return (
+    <div className="relative shrink-0" style={{ height: dim, width: dim }}>
+      <svg viewBox="0 0 150 150" className="h-full w-full -rotate-90">
+        <circle cx="75" cy="75" r={r} fill="none" stroke="#1E293B" strokeWidth="10" />
+        <circle
+          cx="75"
+          cy="75"
+          r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth="10"
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={offset}
+          style={{ transition: "stroke-dashoffset 700ms ease, stroke 400ms ease" }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className={`font-semibold tabular-nums ${size === "sm" ? "text-2xl" : "text-4xl"}`} style={{ color }}>
+          {score}%
+        </span>
+        <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500">{label}</span>
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+## src/components/walletsop/Toggle.jsx
+
+```jsx
+import React from "react";
+
+export default function Toggle({ label, hint, checked, onChange }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className={`flex w-full items-center justify-between gap-4 rounded-lg border px-4 py-3 text-left transition-all duration-200 ${
+        checked
+          ? "border-emerald-500/50 bg-emerald-500/10"
+          : "border-slate-800 bg-slate-900/60 hover:border-slate-700"
+      }`}
+    >
+      <span>
+        <span className={`block text-sm font-medium ${checked ? "text-emerald-300" : "text-slate-200"}`}>{label}</span>
+        {hint && <span className="mt-0.5 block text-xs text-slate-500">{hint}</span>}
+      </span>
+      <span
+        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200 ${
+          checked ? "bg-emerald-500" : "bg-slate-700"
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all duration-200 ${
+            checked ? "left-[22px]" : "left-0.5"
+          }`}
+        />
+      </span>
+    </button>
+  );
+}
+```
+
+---
+
+## src/pages/Home.jsx (Audit)
+
+```jsx
+import React, { useMemo, useState } from "react";
+import Checkup from "@/components/walletsop/Checkup";
+import ResultsDashboard from "@/components/walletsop/ResultsDashboard";
+import Recommendations from "@/components/walletsop/Recommendations";
+import { diagnose, buildRecommendations } from "@/lib/diagnostics";
+
+const INITIAL = {
+  device: "",
+  seedAge: "",
+  entropySource: "",
+  diceRolls: "",
+  backupMedium: "",
+  exposure: "",
+  firmwareCurrent: false,
+  passphrase: false,
+  multisig: false,
+  fingerprint: "",
+};
+
+export default function Home() {
+  const [state, setState] = useState(INITIAL);
+  const set = (key, value) => setState((s) => ({ ...s, [key]: value }));
+
+  const ready = state.entropySource || state.exposure !== "";
+  const result = useMemo(() => (ready ? diagnose(state) : null), [state, ready]);
+  const rec = useMemo(
+    () => (result && (result.fatal || result.subScores.entropy.score < 100 || result.subScores.hygiene.score < 100 || !state.passphrase || !state.multisig) ? buildRecommendations(result, state) : null),
+    [result, state]
+  );
+
+  return (
+    <>
+      <div className="mb-8 print:hidden">
+        <h2 className="text-2xl font-semibold tracking-tight text-white">Wallet Security Audit</h2>
+        <p className="mt-1 text-sm text-slate-400">
+          Answer the questions below about your setup procedures. No seed phrase is ever requested,
+          and nothing leaves this browser tab.
+        </p>
+      </div>
+
+      <div className="print:hidden">
+        <Checkup state={state} set={set} />
+      </div>
+
+      <div className="mt-10 space-y-6">
+        {result ? (
+          <>
+            <div className="print:hidden">
+              <ResultsDashboard result={result} />
+            </div>
+            {rec && <Recommendations rec={rec} state={state} />}
+          </>
+        ) : (
+          <div className="rounded-xl border border-dashed border-slate-800 p-10 text-center text-sm text-slate-500 print:hidden">
+            Select an entropy source (or answer the exposure check) to run the audit.
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+```
+
+---
+
+## src/pages/EntropyCalculator.jsx
+
+```jsx
+import React, { useState } from "react";
+import { Calculator, ChevronDown } from "lucide-react";
+
+export default function EntropyCalculator() {
+  const [dice, setDice] = useState(1);
+  const [sides, setSides] = useState(6);
+  const [rolls, setRolls] = useState(50);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const safeDice = Math.max(1, parseInt(dice) || 0);
+  const safeSides = Math.max(2, parseInt(sides) || 0);
+  const safeRolls = Math.max(0, parseInt(rolls) || 0);
+
+  const bits = safeDice * safeRolls * Math.log2(safeSides);
+  const combos = Math.pow(safeSides, safeDice * safeRolls);
+
+  const meets128 = bits >= 128;
+  const meets256 = bits >= 256;
+
+  const inputCls =
+    "w-full rounded-lg border border-slate-800 bg-slate-900/70 px-4 py-3 text-sm text-slate-100 outline-none transition-colors focus:border-emerald-500/60 font-mono";
+
+  return (
+    <>
+      <div className="mb-8">
+        <div className="flex items-center gap-3">
+          <Calculator className="h-6 w-6 text-emerald-400" />
+          <h2 className="text-2xl font-semibold tracking-tight text-white">Entropy Calculator</h2>
+        </div>
+        <p className="mt-1 text-sm text-slate-400">
+          A standalone educational tool. This does not feed into or affect your Audit score, and it
+          never asks for or accepts actual roll results — only how many rolls were or will be made.
+        </p>
+      </div>
+
+      <div className="space-y-5">
+        <div>
+          <label className="mb-2 block text-sm text-slate-300">Number of Rolls</label>
+          <input type="number" min="0" value={rolls} onChange={(e) => setRolls(e.target.value)} className={inputCls} />
+          <p className="mt-2 text-xs text-slate-500">
+            Rolling the same single die repeatedly? Leave "Number of Dice" at 1 — most users only need this one input.
+          </p>
+        </div>
+
+        <div className="rounded-lg border border-slate-800 bg-slate-900/40">
+          <button
+            onClick={() => setShowAdvanced((s) => !s)}
+            className="flex w-full items-center justify-between px-4 py-3 text-sm text-slate-400 hover:text-slate-200"
+          >
+            <span>Advanced: multiple dice or non-standard sides</span>
+            <ChevronDown className={`h-4 w-4 transition-transform ${showAdvanced ? "rotate-180" : ""}`} />
+          </button>
+          {showAdvanced && (
+            <div className="grid gap-4 px-4 pb-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm text-slate-300">Number of Dice</label>
+                <input type="number" min="1" value={dice} onChange={(e) => setDice(e.target.value)} className={inputCls} />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm text-slate-300">Sides per Die</label>
+                <input type="number" min="2" value={sides} onChange={(e) => setSides(e.target.value)} className={inputCls} />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-8 grid gap-4 sm:grid-cols-2">
+        <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-6">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Combinations</h3>
+          <p className="mt-2 font-mono text-lg text-slate-200">
+            {combos > 0 ? combos.toExponential(2) : "0"}
+          </p>
+        </div>
+        <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-6">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Bits of Entropy</h3>
+          <p className="mt-2 font-mono text-lg text-slate-200">{bits.toFixed(1)}</p>
+        </div>
+      </div>
+
+      <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900/40 p-6">
+        <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
+          BIP-39 Comparison
+        </h3>
+        <div className="space-y-3">
+          <div className={`flex items-center justify-between rounded-lg border px-4 py-3 ${meets128 ? "border-emerald-500/40 bg-emerald-500/10" : "border-slate-800 bg-slate-900/60"}`}>
+            <div>
+              <p className="text-sm font-medium text-slate-200">128-bit (12-word minimum)</p>
+              <p className="text-xs text-slate-500">BIP-39 minimum security threshold</p>
+            </div>
+            <span className={`text-sm font-medium ${meets128 ? "text-emerald-400" : "text-amber-400"}`}>
+              {meets128 ? "Meets" : "Below"}
+            </span>
+          </div>
+          <div className={`flex items-center justify-between rounded-lg border px-4 py-3 ${meets256 ? "border-emerald-500/40 bg-emerald-500/10" : "border-slate-800 bg-slate-900/60"}`}>
+            <div>
+              <p className="text-sm font-medium text-slate-200">256-bit (24-word recommended)</p>
+              <p className="text-xs text-slate-500">BIP-39 recommended security level</p>
+            </div>
+            <span className={`text-sm font-medium ${meets256 ? "text-emerald-400" : "text-amber-400"}`}>
+              {meets256 ? "Meets" : "Below"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900/40 p-6">
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+          What "Bits of Entropy" Means
+        </h3>
+        <p className="text-sm leading-relaxed text-slate-400">
+          Entropy measures the unpredictability of a random value, expressed in bits. Each bit doubles
+          the number of possible outcomes. A 128-bit key has 2^128 possible values — more than the
+          number of atoms in the observable universe. Higher entropy means a seed is harder to guess,
+          even by an attacker trying every possible combination. BIP-39 mnemonics encode either 128
+          bits (12 words) or 256 bits (24 words) of entropy, with 256 bits recommended for long-term
+          cold storage.
+        </p>
+      </div>
+    </>
+  );
+}
+```
+
+---
+
+## src/pages/BestPractices.jsx
+
+```jsx
+import React from "react";
+import { BookOpen, Dices, KeyRound, Users, AlertTriangle, Shield } from "lucide-react";
+
+function Section({ id, icon: Icon, title, children }) {
+  return (
+    <section id={id} className="rounded-xl border border-slate-800 bg-slate-900/40 p-6 scroll-mt-20">
+      <div className="mb-3 flex items-center gap-3">
+        <Icon className="h-5 w-5 text-emerald-400" />
+        <h2 className="text-base font-semibold text-white">{title}</h2>
+      </div>
+      <div className="space-y-3 text-sm leading-relaxed text-slate-400">{children}</div>
+    </section>
+  );
+}
+
+export default function BestPractices() {
+  return (
+    <>
+      <div className="mb-8">
+        <div className="flex items-center gap-3">
+          <BookOpen className="h-6 w-6 text-emerald-400" />
+          <h2 className="text-2xl font-semibold tracking-tight text-white">Best Practices</h2>
+        </div>
+        <p className="mt-1 text-sm text-slate-400">
+          Reference material — not a questionnaire. No score, no inputs. Just readable guidance.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <Section id="manual-entropy" icon={Dices} title="Why Manual Entropy Matters">
+          <p>
+            Hardware wallets include built-in random number generators (TRNGs) that produce seed
+            entropy. These are generally well-implemented, but they represent a single point of trust:
+            if the RNG is flawed, backdoored, or compromised during manufacturing, your seed could be
+            predictable.
+          </p>
+          <p>
+            Manual entropy — rolling physical dice and entering the results directly on your device —
+            removes the manufacturer's RNG from the trust model entirely. The security of your seed
+            depends only on the fairness of your dice and your rolling technique, both of which you can
+            verify visually.
+          </p>
+          <p>
+            For a standard 6-sided die, 50 rolls exceeds the 128-bit BIP-39 minimum, and 100 rolls
+            exceeds the 256-bit recommendation. Use the{" "}
+            <a href="/entropy-calculator" className="text-emerald-400 hover:underline">
+              Entropy Calculator
+            </a>{" "}
+            to compute exact values.
+          </p>
+        </Section>
+
+        <Section id="passphrase" icon={KeyRound} title="Why a Passphrase Matters">
+          <p>
+            A BIP-39 passphrase (sometimes called the "25th word") is an additional secret layered on
+            top of your seed phrase. Even if someone obtains your 12 or 24 words, they cannot access
+            your funds without the passphrase.
+          </p>
+          <p>
+            The passphrase is not stored on the device — it must be entered separately each time you
+            unlock the wallet. Store it in a different physical location from your seed backup. Never
+            store it digitally or type it into any internet-connected device.
+          </p>
+        </Section>
+
+        <Section id="multisig" icon={Users} title="Why Multisig Matters">
+          <p>
+            A multi-signature (multisig) setup requires multiple independent keys to authorize a
+            transaction. For example, a 2-of-3 setup requires any two of three separate devices to sign.
+            This means a single compromised key is not enough to move funds.
+          </p>
+          <p>
+            Multisig is especially valuable for large holdings — it reduces single-point-of-failure
+            risk and can provide redundancy if one device is lost or destroyed. Each key should be
+            generated independently and stored in separate geographic locations.
+          </p>
+        </Section>
+
+        <Section id="storage-mistakes" icon={AlertTriangle} title="Common Seed-Storage Mistakes">
+          <p>These are the most common ways seeds are compromised in practice:</p>
+          <ul className="ml-4 list-disc space-y-1">
+            <li>Photographing a seed phrase with a phone camera</li>
+            <li>Storing a seed in a cloud backup service (iCloud, Google Drive, Dropbox)</li>
+            <li>Saving a seed in a password manager or notes app</li>
+            <li>Typing a seed into a computer to "verify" it or generate a receive address</li>
+            <li>Emailing or messaging a seed to yourself or "support"</li>
+            <li>Storing the seed and passphrase together in the same location</li>
+          </ul>
+          <p>
+            If you have done any of these, treat the seed as compromised and generate a new one using
+            the audit's Migration SOP.
+          </p>
+        </Section>
+
+        <Section id="general-opsec" icon={Shield} title="General Opsec">
+          <p>
+            <strong className="text-slate-300">Never share your seed phrase with anyone.</strong>{" "}
+            No legitimate support agent, wallet developer, or exchange will ever ask for it. Anyone who
+            requests your seed is attempting theft.
+          </p>
+          <p>
+            <strong className="text-slate-300">Common phishing patterns:</strong> fake wallet software
+            prompting you to "verify" your seed, emails claiming your wallet needs "recovery," social
+            media DMs offering technical support, and fake hardware wallet websites selling tampered
+            devices.
+          </p>
+          <p>
+            <strong className="text-slate-300">Device sourcing:</strong> only purchase hardware wallets
+            directly from the manufacturer or an authorized reseller. Never buy a secondhand device —
+            it may have been modified to produce predictable seeds.
+          </p>
+          <p>
+            <strong className="text-slate-300">Physical security:</strong> store your seed backup and
+            passphrase in separate, fireproof locations. Consider a safe deposit box for one and a home
+            safe for the other.
+          </p>
+        </Section>
+      </div>
+    </>
+  );
+}
+```
+
+---
+
+## src/lib/PageNotFound.jsx
+
+```jsx
+import { Link } from "react-router-dom";
+
+export default function PageNotFound() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 text-slate-300">
+      <h1 className="text-6xl font-bold text-white">404</h1>
+      <p className="mt-2 text-sm text-slate-400">Page not found.</p>
+      <Link to="/" className="mt-4 rounded-md bg-emerald-500 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-emerald-400">
+        Back to WalletSOP
+      </Link>
+    </div>
+  );
+}
+```
+
+---
+
+## index.html
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#10B981" />
+    <title>WalletSOP</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+```
+
+---
+
+## src/main.jsx
+
+```jsx
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from '@/App.jsx'
+import '@/index.css'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <App />
+)
+
+// Register the offline service worker. Silent and non-blocking — the app
+// works identically whether or not this succeeds. Only the app's own static
+// assets are cached; no data ever leaves the browser.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {})
+  })
+}
+```
+
+---
+
+## public/favicon.svg
+
+```svg
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0F172A"/>
+  <rect x="8" y="8" width="496" height="496" rx="108" fill="none" stroke="#10B981" stroke-opacity="0.3" stroke-width="4"/>
+  <polyline points="64,288 176,288 232,160 296,352 344,288 448,288"
+    fill="none" stroke="#10B981" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+```
+
+---
+
+## public/manifest.json
+
+```json
+{
+  "name": "WalletSOP",
+  "short_name": "WalletSOP",
+  "description": "A stateless, browser-based security audit for self-custody cold-storage procedures. No seed phrase ever requested, nothing leaves your browser.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F172A",
+  "theme_color": "#10B981",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+```
+
+---
+
+## public/sw.js
+
+```js
+// WalletSOP service worker — offline static-asset caching ONLY.
+//
+// What this does:
+//   - Caches the app's own built static files (HTML, JS, CSS, icons) so the
+//     app works fully offline after the first visit.
+//   - Uses cache-first: serve from cache, fall back to network on a miss, and
+//     cache the response for next time.
+//   - On activation, deletes any previous cache version so stale scoring
+//     logic is never served.
+//
+// What this does NOT do:
+//   - No background sync, no push notifications, no telemetry, no analytics.
+//   - No "check for updates" network ping — the browser manages SW updates.
+//   - No cross-origin handling — requests to any other origin pass through
+//     untouched and are never cached or inspected.
+//
+// This file is part of the auditable public source at:
+//   https://github.com/walletsop/walletsop
+
+const CACHE = "walletsop-v1";
+
+// Core app shell — always available offline after install.
+const CORE = [
+  "/",
+  "/index.html",
+  "/manifest.json",
+  "/favicon.svg",
+];
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE).then((cache) => cache.addAll(CORE))
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))
+      )
+    ).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+
+  // Only handle same-origin GET requests; everything else passes through.
+  if (req.method !== "GET") return;
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
+
+  event.respondWith(
+    caches.match(req).then((cached) => {
+      if (cached) return cached;
+      return fetch(req).then((res) => {
+        // Only cache successful, same-origin basic responses.
+        if (res && res.status === 200 && res.type === "basic") {
+          const copy = res.clone();
+          caches.open(CACHE).then((cache) => cache.put(req, copy));
+        }
+        return res;
+      });
+    })
+  );
+});
+```
+
+---
+
+## src/hooks/usePwaInstall.js
+
+```js
+import { useState, useEffect } from "react";
+
+// Captures the browser's beforeinstallprompt event so any component can
+// trigger the PWA install dialog on demand. Non-blocking: if the browser
+// doesn't support installation, canInstall stays false and nothing renders.
+export function usePwaInstall() {
+  const [deferred, setDeferred] = useState(null);
+  const [installed, setInstalled] = useState(false);
+
+  useEffect(() => {
+    const onPrompt = (e) => {
+      e.preventDefault();
+      setDeferred(e);
+    };
+    const onInstalled = () => {
+      setInstalled(true);
+      setDeferred(null);
+    };
+    window.addEventListener("beforeinstallprompt", onPrompt);
+    window.addEventListener("appinstalled", onInstalled);
+    if (window.matchMedia?.("(display-mode: standalone)")?.matches) {
+      setInstalled(true);
+    }
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onPrompt);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
+  }, []);
+
+  const promptInstall = async () => {
+    if (!deferred) return;
+    deferred.prompt();
+    await deferred.userChoice;
+    setDeferred(null);
+  };
+
+  return { canInstall: !!deferred && !installed, promptInstall };
+}
+```
+
+---
+
+## src/components/walletsop/InstallButton.jsx
+
+```jsx
+import React from "react";
+import { Download } from "lucide-react";
+import { usePwaInstall } from "@/hooks/usePwaInstall";
+
+// Always-visible "Install App" button. Clicking it triggers the native PWA
+// install prompt when the browser supports installation; otherwise it's a
+// no-op (the app still works normally).
+export default function InstallButton() {
+  const { promptInstall } = usePwaInstall();
+  return (
+    <button
+      onClick={promptInstall}
+      className="inline-flex items-center gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300 transition-colors hover:bg-emerald-500/20 print:hidden"
+    >
+      <Download className="h-4 w-4" />
+      Install App
+    </button>
+  );
+}
+```
+
+---
+
+## src/components/walletsop/Header.jsx (updated)
+
+The header now imports and renders `<InstallButton />` alongside the "Audit
+Source Code" link. The button is always visible; clicking it triggers the
+native PWA install prompt when the browser supports installation.
+
+---
+
+## README.md
+
+```markdown
+# WalletSOP
+
+A free, open-source, 100% stateless web app that performs a procedural security audit of
+cryptocurrency cold-storage setups and produces an educational, printable Standard Operating
+Procedure (SOP). This is diagnostic education, not mathematical verification of any specific
+wallet or device.
+
+## Absolute Rules
+
+- Never asks for a seed phrase, private key, or any secret material.
+- Never flags a specific device model + date combination as "compromised."
+- Scoring is 100% deduction/addition based on documented best practices.
+- Zero network requests. Zero backend. Zero data persistence, ever.
+- No live connection to any physical hardware wallet (no WebUSB/WebHID).
+- Self-report only — the tool cannot and does not claim to verify anything it's told.
+
+## Quick Start
+
+```bash
+npm install
+npm run dev
+```
+
+## Run Fully Offline
+
+To independently verify zero network calls:
+
+```bash
+npm run build
+```
+
+Then disconnect from the internet and open `dist/index.html` directly in your browser, or serve
+the `dist/` folder locally:
+
+```bash
+npx serve dist
+```
+
+With the internet disconnected, the app will function identically — all computation happens
+client-side.
+
+## Build Checksum
+
+Each tagged release publishes a SHA-256 checksum of its build output, computed by CI at
+release time — never hand-written. Find the checksum for a given version in that release's
+GitHub Release notes, or recompute it yourself:
+
+```bash
+npm install
+npm run build
+sha256sum dist/index.html dist/assets/*.js dist/assets/*.css
+```
+
+Compare the output against the checksum listed on the corresponding GitHub Release page. A
+mismatch means you are not running the code from that release — inspect the source before
+trusting it.
+
+## Rubric Version
+
+Current rubric: **v1.0** (2026-08-05)
+
+The scoring rubric is versioned and dated. Any future changes to scoring weights will be
+tracked in the changelog below and the version number will increment.
+
+### Changelog
+
+- **v1.0** (2026-08-05): Initial rubric. Four independent sub-scores (Entropy, Backup &
+  Storage, Access Control, Operational Hygiene). Fatal exposure path in Backup & Storage.
+
+## Install as an App (PWA)
+
+WalletSOP is installable as a Progressive Web App. Once installed, it runs from
+a home-screen or desktop icon and works fully offline — no browser, no
+internet connection, no Node.js, no command line required.
+
+**This is functionally equivalent to the "Run Fully Offline" instructions
+above**, but without needing to clone the repo or run a build yourself.
+
+### What gets cached
+
+- Only the app's own built static files: `index.html`, the bundled JS and CSS,
+  `manifest.json`, and `favicon.svg`.
+- Caching happens locally in your browser's storage after your first visit.
+  A cache-first strategy serves these on every subsequent load — offline.
+
+### What does NOT get cached (or sent anywhere)
+
+- Nothing about you, your answers, or your audit. The app remains 100%
+  stateless — no data is ever stored, transmitted, or persisted.
+- The service worker never makes background sync, push, telemetry, analytics,
+  or "check for updates" network requests.
+- No cross-origin request is ever cached or inspected — the worker only
+  handles same-origin GET requests for the app's own static assets.
+
+### Inspectability
+
+The service worker (`public/sw.js`) and manifest (`public/manifest.json`) are
+part of the auditable public source in this repository, alongside everything
+else. Read them yourself before installing.
+
+### Header banner wording
+
+The in-app header reads "100% Stateless. No data ever leaves your browser."
+This refers to user data and scoring logic — no information about you or your
+audit is ever sent anywhere. The one-time static-asset caching a PWA install
+performs is a separate, local, inspectable operation that fetches only the
+app's own files; it does not contradict the stateless claim.
+
+---
+
+## Tech Stack
+
+- React 18
+- Vite
+- Tailwind CSS
+- lucide-react
+
+## License
+
+MIT
