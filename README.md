@@ -1,4 +1,4 @@
-# WalletSOP(Standard Operating Procedure)
+# WalletSOP (Standard Operating Procedure)
 
 A free, open-source, 100% stateless security audit for cryptocurrency cold-storage procedures.
 
